@@ -2,7 +2,6 @@
 
 # Edit at https://www.toptal.com/developers/gitignore?templates=node
 
-.DS_Store
 /node_modules
 npm-debug.log
 .DS_Store
@@ -62,7 +61,7 @@ build/Release
 
 # Dependency directories
 
-/node_modules/
+node_modules/
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
