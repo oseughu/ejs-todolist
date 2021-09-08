@@ -5,6 +5,7 @@ const host = process.env.HOSTNAME;
 const mongoHost = process.env.DB_HOST;
 const mongoUser = process.env.DB_USER;
 const mongoKey = process.env.DB_PASS;
+const mongoName = process.env.DB_NAME;
 const mongoose = require("mongoose");
 const _ = require("lodash");
 
@@ -16,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 mongoose.connect(
-  `mongodb+srv://${mongoUser}:${mongoKey}@${mongoHost}/todolistDB`
+  `mongodb+srv://${mongoUser}:${mongoKey}@${mongoHost}/${mongoName}`
 );
 
 const itemsSchema = new mongoose.Schema({
