@@ -29,7 +29,7 @@ const Item = mongoose.model("Item", itemsSchema);
 const item1 = new Item({ name: "Welcome to your ToDoList!" });
 const item2 = new Item({ name: "Hit the + button to add new items." });
 const item3 = new Item({
-  name: "<--- Hit this to mark an item as completed. This will also delete the item from the list to reduce clutter.",
+  name: "← Hit this to mark an item as completed. This will also delete the item from the list to reduce clutter.",
 });
 
 const defaultItems = [item1, item2, item3];
