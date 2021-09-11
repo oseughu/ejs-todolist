@@ -1,4 +1,6 @@
-require("dotenv").config({ path: `${__dirname}/.env` });
+//Require the necessary modules
+
+require("dotenv").config({ path: `${__dirname}/.env` }); //Stores sensitive data as enviroment variables
 const express = require("express");
 const port = process.env.PORT || 3000;
 const host = process.env.HOSTNAME;
@@ -11,21 +13,27 @@ const _ = require("lodash");
 
 const app = express();
 
+//Set view engine to use ejs
 app.set("view engine", "ejs");
 
+//Parse html form data and define static file directory
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
+//Connect to the MongoDB server using the Atlas link for todoListDB
 mongoose.connect(
   `mongodb+srv://${mongoUser}:${mongoKey}@${mongoHost}/${mongoName}`
 );
 
+//Define schema for Items
 const itemsSchema = new mongoose.Schema({
   name: String,
 });
 
+//Create Items collection
 const Item = mongoose.model("Item", itemsSchema);
 
+//Default items for To-Do List
 const item1 = new Item({ name: "Welcome to your ToDoList!" });
 const item2 = new Item({ name: "Hit the + button to add new items." });
 const item3 = new Item({
@@ -34,41 +42,66 @@ const item3 = new Item({
 
 const defaultItems = [item1, item2, item3];
 
+//Define schema for custom lists
 const listSchema = new mongoose.Schema({
   name: String,
   items: [itemsSchema],
 });
 
+//Create Lists collection
 const List = mongoose.model("List", listSchema);
 
-const today = new Date();
-const options = {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
+//Function to display today's date depending on location
+const getDate = () => {
+  const options = {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  };
+
+  const today = new Date().toLocaleDateString("en-US", options);
+  return today;
 };
 
-const day = today.toLocaleDateString("en-US", options);
+app.route("/")
+  .get((req, res) => {
+    //Find all the items in the list and displays them on the homepage
+    Item.find({}, (err, foundItems) => {
+      if (foundItems.length === 0) {
+        Item.insertMany(defaultItems, (err) => {
+          if (!err) {
+            res.redirect("/");
+          }
+        });
+      } else {
+        res.render("list", {
+          date: getDate,
+          listName: "To-Do List",
+          newListItems: foundItems,
+        });
+      }
+    });
+  })
+  .post((req, res) => {
+    const itemName = req.body.newItem;
+    const listName = req.body.list;
 
-app.get("/", (req, res) => {
-  Item.find({}, (err, foundItems) => {
-    if (foundItems.length === 0) {
-      Item.insertMany(defaultItems, (err) => {
-        if (!err) {
-          res.redirect("/");
-        }
-      });
+    const item = new Item({ name: itemName });
+
+    if (listName === "To-Do List") {
+      item.save();
+      res.redirect("/");
     } else {
-      res.render("list", {
-        date: day,
-        listName: "To-Do List",
-        newListItems: foundItems,
+      List.findOne({ name: listName }, (err, foundList) => {
+        foundList.items.push(item);
+        foundList.save();
+        res.redirect("/" + listName);
       });
     }
   });
-});
 
 app.get("/:list", (req, res) => {
+  //Use lodash to ensure there are no duplicate items
   const customListName = _.capitalize(req.params.list);
 
   List.findOne({ name: customListName }, (err, foundList) => {
@@ -82,31 +115,13 @@ app.get("/:list", (req, res) => {
         res.redirect("/" + customListName);
       } else {
         res.render("list", {
-          date: day,
+          date: getDate,
           listName: foundList.name,
           newListItems: foundList.items,
         });
       }
     }
   });
-});
-
-app.post("/", (req, res) => {
-  const itemName = req.body.newItem;
-  const listName = req.body.list;
-
-  const item = new Item({ name: itemName });
-
-  if (listName === "To-Do List") {
-    item.save();
-    res.redirect("/");
-  } else {
-    List.findOne({ name: listName }, (err, foundList) => {
-      foundList.items.push(item);
-      foundList.save();
-      res.redirect("/" + listName);
-    });
-  }
 });
 
 app.post("/delete", (req, res) => {
